@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>与班主任的校园日常</title>
+  <style>
+    /* 全局样式 */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: #222;
+      overflow: hidden;
+    }
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .bg-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+      transition: background-image 0.3s;
+    }
+    .character-layer {
+      position: absolute;
+      left: 50%;
+      bottom: 100px;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 90vh;
+      pointer-events: none;
+    }
+    .character-img {
+      max-height: 90vh;
+      max-width: 100vw;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
+    }
+    .textbox-layer {
+      position: absolute;
+      left: 0; bottom: 0; width: 100%; height: 380px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 48px 32px 32px 32px;
+      box-sizing: border-box;
+      font-size: 1.5em;
+      line-height: 1.8;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      transition: background 0.3s;
+    }
+    .textbox-content {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      word-break: break-all;
+      font-size: 1.15em;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+      z-index: 4;
+    }
+    .option-btn {
+      background: linear-gradient(90deg,#4e8cff,#6ad1ff);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 0;
+      font-size: 0.95em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s, transform 0.1s;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    .option-btn:active {
+      background: #3576c9;
+      transform: scale(0.98);
+    }
+    .continue-btn {
+      background: #fff;
+      color: #222;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 0;
+      font-size: 0.9em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      width: 100%;
+      max-width: 120px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: background 0.2s, transform 0.1s;
+    }
+    .continue-btn:active {
+      background: #eee;
+      transform: scale(0.98);
+    }
+    /* 标题画面样式 */
+    #title-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #222 url('title_bg.png') center/cover no-repeat;
+      transition: opacity 0.3s;
+    }
+    #title-name {
+      font-size: 2.6em;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 0 4px 24px #000, 0 1px 0 #4e8cff;
+      margin-bottom: 32px;
+      letter-spacing: 2px;
+    }
+    #start-btn {
+      background: linear-gradient(90deg,#4e8cff,#6ad1ff);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      transition: background 0.2s, transform 0.1s;
+    }
+    #start-btn:active {
+      background: #3576c9;
+      transform: scale(0.98);
+    }
+    /* 结局按钮 */
+    .restart-btn {
+      background: linear-gradient(90deg,#ff7e5f,#feb47b);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 0;
+      font-size: 0.95em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 18px;
+      width: 100%;
+      max-width: 140px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s, transform 0.1s;
+    }
+    .restart-btn:active {
+      background: #ff7e5f;
+      transform: scale(0.98);
+    }
+    /* 响应式适配 */
+    @media (max-width: 600px) {
+      .option-btn {
+        font-size: 0.95em;
+        padding: 8px 0;
+        max-width: 320px;
+      }
+      .continue-btn {
+        font-size: 0.9em;
+        padding: 6px 0;
+        max-width: 120px;
+      }
+      .restart-btn {
+        font-size: 0.95em;
+        padding: 8px 0;
+        max-width: 140px;
+      }
+      #start-btn {
+        font-size: 1em;
+        padding: 12px 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- 背景层 -->
+    <div class="bg-layer" id="bg-layer"></div>
+    <!-- 立绘层 -->
+    <div class="character-layer" id="character-layer"></div>
+    <!-- 文本框层 -->
+    <div class="textbox-layer" id="textbox-layer">
+      <div class="textbox-content" id="textbox-content"></div>
+      <div class="options" id="options"></div>
+      <button class="continue-btn" id="continue-btn" style="display:none;">继续</button>
+      <button class="restart-btn" id="restart-btn" style="display:none;">重新开始</button>
+    </div>
+    <!-- 标题画面 -->
+    <div id="title-screen">
+      <div id="title-name">与班主任的校园日常</div>
+      <button id="start-btn">开始游戏</button>
+    </div>
+  </div>
+  <script>
+    // ================== 剧情数据 ==================
+    const storyData = {
+      "scenes": {
+        "classroom": { "bg": "classroom.png", "name": "教室" },
+        "office": { "bg": "office.png", "name": "办公室" },
+        "playground": { "bg": "playground.png", "name": "操场" },
+        "dorm": { "bg": "dorm.png", "name": "教师宿舍" },
+        "gate": { "bg": "gate.png", "name": "校门口" }
+      },
+      "teacherEmotions": {
+        "smile": "teacher_smile.png",
+        "serious": "teacher_serious.png",
+        "surprised": "teacher_surprised.png",
+        "moved": "teacher_moved.png",
+        "sick": "teacher_sick.png"
+      },
+      "nodes": [
+        { "id": "start", "text": "班主任：“同学们，期中考试就在下周一，大家复习得怎么样了？”", "bg": "classroom", "teacher": "smile", "next": "node2" },
+        { "id": "node2", "text": "班主任走到你身边：“尤其是你，最近上课好像有点心不在焉，是不是有什么心事？”", "bg": "classroom", "teacher": "smile", "options": [
+          { "text": "坦诚回答：“老师，我最近压力有点大，晚上睡不好。”", "next": "node4a", "effect": 1 },
+          { "text": "敷衍回答：“没事，老师，我会好好复习的。”", "next": "node4b", "effect": 0 },
+          { "text": "不耐烦：“知道了知道了，别管我。”", "next": "node4c", "effect": -1 }
+        ] },
+        { "id": "node4a", "text": "班主任（关切）：“原来是这样，学习也要注意休息啊。这样吧，放学后到我办公室来，我帮你梳理一下重点，减轻你的负担。”", "bg": "classroom", "teacher": "smile", "next": "node5a" },
+        { "id": "node5a", "text": "你：“谢谢老师！”", "bg": "classroom", "teacher": "smile", "next": "node7" },
+        { "id": "node4b", "text": "班主任（半信半疑）：“好吧，那你自己抓紧，有不懂的随时问。”", "bg": "classroom", "teacher": "serious", "next": "node5b" },
+        { "id": "node5b", "text": "班主任：“对了，数学的二次函数你掌握得怎么样？”", "bg": "classroom", "teacher": "smile", "options": [
+          { "text": "老实说：“有些地方还不太明白。”", "next": "node6b1", "effect": 1 },
+          { "text": "逞强：“没问题，我都会。”", "next": "node6b2", "effect": 0 },
+          { "text": "转移话题：“老师，我先去上厕所。”", "next": "node6b3", "effect": -1 }
+        ] },
+        { "id": "node6b1", "text": "班主任点点头：“放学后到我办公室来，我给你补补课。”", "bg": "classroom", "teacher": "smile", "next": "node7" },
+        { "id": "node6b2", "text": "班主任：“那就好，考试加油。”说完走开了。", "bg": "classroom", "teacher": "smile", "next": "node_jump_to_gate" },
+        { "id": "node6b3", "text": "班主任有些失望，让你离开。你心里有点愧疚。", "bg": "classroom", "teacher": "serious", "next": "node_jump_to_gate" },
+        { "id": "node4c", "text": "班主任愣了一下，叹了口气：“好吧，那你先回座位吧。”", "bg": "classroom", "teacher": "serious", "next": "node5c" },
+        { "id": "node5c", "text": "你感到有点愧疚，但没说出口。", "bg": "classroom", "teacher": "smile", "next": "node_jump_to_gate" },
+        { "id": "node7", "text": "（放学后，你来到办公室）", "bg": "office", "teacher": "smile", "next": "node8" },
+        { "id": "node8", "text": "班主任：“来，坐下吧。我们先从你最头疼的二次函数开始。”", "bg": "office", "teacher": "smile", "next": "node9" },
+        { "id": "node9", "text": "（讲解过程中，你手机突然响了）", "bg": "office", "teacher": "smile", "options": [
+          { "text": "立刻关掉手机，专心听讲", "next": "node10a", "effect": 1 },
+          { "text": "偷偷看一眼，然后继续听", "next": "node10b", "effect": 0 },
+          { "text": "借口接电话，跑出去玩了", "next": "node10c", "effect": -1 }
+        ] },
+        { "id": "node10a", "text": "班主任微笑：“很好，能抵制诱惑，值得表扬。那我们来练习几道题。”", "bg": "office", "teacher": "smile", "next": "node11a" },
+        { "id": "node11a", "text": "你认真做题，正确率很高。班主任：“不错嘛，其实你很聪明，就是需要静下心来。”", "bg": "office", "teacher": "smile", "next": "node12" },
+        { "id": "node10b", "text": "班主任看到你分心，轻咳一声：“专心。”", "bg": "office", "teacher": "serious", "next": "node11b" },
+        { "id": "node11b", "text": "你赶紧收起手机，继续听课，但效果一般。", "bg": "office", "teacher": "smile", "next": "node12" },
+        { "id": "node10c", "text": "你跑出办公室，在操场闲逛。", "bg": "playground", "teacher": null, "next": "node11c" },
+        { "id": "node11c", "text": "突然下雨，你浑身湿透，第二天感冒了。", "bg": "playground", "teacher": null, "next": "node_jump_to_gate" },
+        { "id": "node12", "text": "补习结束，班主任收拾书本：“记住，学习是积累的过程，但也要注意身体。快回宿舍休息吧。”", "bg": "office", "teacher": "smile", "next": "node13" },
+        { "id": "node13", "text": "你走出办公室，回头看见班主任还在批改作业。", "bg": "office", "teacher": null, "next": "node14" },
+        { "id": "node14", "text": "（内心独白：老师真辛苦啊）", "bg": "office", "teacher": null, "next": "node15" },
+        { "id": "node15", "text": "体育课自由活动，你正坐在操场边发呆。", "bg": "playground", "teacher": "smile", "next": "node16" },
+        { "id": "node16", "text": "班主任穿着一身运动装走过来：“怎么不去活动活动？一直坐着容易积食哦。”", "bg": "playground", "teacher": "smile", "options": [
+          { "text": "邀请老师一起跑步：“老师，我们一起跑几圈吧！”", "next": "node17a", "effect": 1 },
+          { "text": "委婉拒绝：“老师，我有点累，想休息一会儿。”", "next": "node17b", "effect": 0 },
+          { "text": "不理不睬，直接走开", "next": "node17c", "effect": -1 }
+        ] },
+        { "id": "node17a", "text": "班主任笑着点头：“好啊，我也该活动活动了。”", "bg": "playground", "teacher": "smile", "next": "node18a" },
+        { "id": "node18a", "text": "你们一起跑步，边跑边聊天。班主任：“你最近进步挺大，继续保持啊。”", "bg": "playground", "teacher": "smile", "next": "node19a" },
+        { "id": "node19a", "text": "你：“多亏老师辅导！”", "bg": "playground", "teacher": "smile", "next": "node20" },
+        { "id": "node17b", "text": "班主任：“那好吧，别坐太久，小心着凉。”说完自己去跑步了。", "bg": "playground", "teacher": "smile", "next": "node18b" },
+        { "id": "node18b", "text": "你看着老师跑步的背影，有点无聊。", "bg": "playground", "teacher": null, "next": "node20" },
+        { "id": "node17c", "text": "班主任望着你离开，摇摇头。", "bg": "playground", "teacher": "serious", "next": "node18c" },
+        { "id": "node18c", "text": "你心里觉得老师管得太多，但隐隐又有些后悔。", "bg": "playground", "teacher": null, "next": "node20" },
+        { "id": "node20", "text": "体育课结束，大家回教室。", "bg": "classroom", "teacher": null, "next": "node21" },
+        { "id": "node21", "text": "这天你没看到班主任来上课，听同学说老师病了。", "bg": "classroom", "teacher": null, "options": [
+          { "text": "放学后去老师宿舍探望", "next": "node22a", "effect": 1 },
+          { "text": "发个短信问候一下", "next": "node22b", "effect": 0 },
+          { "text": "装作不知道", "next": "node22c", "effect": -1 }
+        ] },
+        { "id": "node22a", "text": "你买了水果，敲开老师宿舍的门。班主任（虚弱但微笑）：“你怎么来了？快进来坐。”", "bg": "dorm", "teacher": "sick", "next": "node23a" },
+        { "id": "node23a", "text": "你看到老师桌上堆着没批完的作业。你：“老师，您生病了就别工作了，好好休息吧。”", "bg": "dorm", "teacher": "sick", "options": [
+          { "text": "主动帮忙批改一些简单的作业", "next": "node24a1", "effect": 1 },
+          { "text": "陪老师聊天解闷", "next": "node24a2", "effect": 1 },
+          { "text": "放下水果，坐了一会儿就走", "next": "node24a3", "effect": 0 }
+        ] },
+        { "id": "node24a1", "text": "老师很感动，教你怎么批改，师生关系拉近。", "bg": "dorm", "teacher": "moved", "next": "node25" },
+        { "id": "node24a2", "text": "你们聊了很多，老师讲起自己的学生时代，你更理解老师了。", "bg": "dorm", "teacher": "smile", "next": "node25" },
+        { "id": "node24a3", "text": "老师感谢你来看望，但之后你感觉关系没太大变化。", "bg": "dorm", "teacher": "smile", "next": "node25" },
+        { "id": "node22b", "text": "你发了条短信：“老师，听说您病了，多喝热水，早日康复。”老师回复：“谢谢关心，我会的。”", "bg": "classroom", "teacher": null, "next": "node25" },
+        { "id": "node22c", "text": "第二天，老师带病来上课，咳嗽了几声。你有点愧疚。", "bg": "classroom", "teacher": "sick", "next": "node25" },
+        { "id": "node25", "text": "几天后，老师病好了，回来上课。", "bg": "classroom", "teacher": "smile", "next": "node26" },
+        { "id": "node26", "text": "毕业典礼结束，大家在校门口合影留念。", "bg": "gate", "teacher": "smile", "next": "node27" },
+        { "id": "node27", "text": "班主任站在校门口，和每个同学告别。", "bg": "gate", "teacher": "smile", "next": "node28" },
+        { "id": "node28", "text": "轮到你时，老师看着你，眼中有些不舍。", "bg": "gate", "teacher": "moved", "next": "node29" },
+        { "id": "node29", "text": "（根据你与老师的羁绊值，将迎来不同的结局）", "bg": "gate", "teacher": "moved", "isEndPlaceholder": true },
+        { "id": "ending1", "text": "班主任：“这一年多亏有你这样的学生，让我觉得当老师真幸福。”\n你：“老师，是您改变了我，我会永远记得您。”\n（两人拥抱，背景出现“最佳师生奖”奖状）\n【结局：最佳师生奖】", "bg": "gate", "teacher": "moved", "isEnd": true },
+        { "id": "ending2", "text": "班主任：“你是个聪明又努力的学生，以后一定会大有作为。”\n你：“谢谢老师一直以来的鼓励，我会加油的。”\n【结局：优秀学生】", "bg": "gate", "teacher": "smile", "isEnd": true },
+        { "id": "ending3", "text": "班主任：“毕业了，以后常回母校看看。”\n你：“嗯，老师再见。”\n【结局：普通师生】", "bg": "gate", "teacher": "smile", "isEnd": true },
+        { "id": "ending4", "text": "班主任欲言又止，最终只是简单说了句：“保重。”\n你点点头，匆匆离去。\n【结局：遗憾错过】", "bg": "gate", "teacher": "serious", "isEnd": true },
+        { "id": "node_jump_to_gate", "text": "时光飞逝，转眼到了毕业那天……", "bg": "gate", "teacher": null, "next": "node26" }
+      ]
+    };
+
+    // ================== 游戏状态 ==================
+    let bond = 0; // 好感度
+    let currentNodeId = null;
+    let isGameStarted = false;
+
+    // ================== DOM 元素 ==================
+    const bgLayer = document.getElementById('bg-layer');
+    const characterLayer = document.getElementById('character-layer');
+    const textboxLayer = document.getElementById('textbox-layer');
+    const textboxContent = document.getElementById('textbox-content');
+    const optionsDiv = document.getElementById('options');
+    const continueBtn = document.getElementById('continue-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const titleScreen = document.getElementById('title-screen');
+    const startBtn = document.getElementById('start-btn');
+
+    // ================== 工具函数 ==================
+    // 根据节点 id 查找节点
+    function getNodeById(id) {
+      return storyData.nodes.find(n => n.id === id);
+    }
+    // 渲染背景
+    function renderBackground(bgKey) {
+      const scene = storyData.scenes[bgKey];
+      if (scene && scene.bg) {
+        bgLayer.style.backgroundImage = `url('${scene.bg}')`;
+      } else {
+        bgLayer.style.backgroundImage = '';
+      }
+    }
+    // 渲染立绘
+    function renderCharacter(emotionKey) {
+      characterLayer.innerHTML = '';
+      if (!emotionKey) return;
+      const imgSrc = storyData.teacherEmotions[emotionKey];
+      if (imgSrc) {
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = '班主任立绘';
+        img.className = 'character-img';
+        characterLayer.appendChild(img);
+      }
+    }
+    // 渲染文本
+    function renderText(text) {
+      textboxContent.innerHTML = text.replace(/\n/g, '<br>');
+    }
+    // 渲染选项
+    function renderOptions(options) {
+      optionsDiv.innerHTML = '';
+      if (!options || !Array.isArray(options)) return;
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt.text;
+        btn.onclick = function(e) {
+          e.stopPropagation();
+          if (typeof opt.effect === 'number') bond += opt.effect;
+          goToNode(opt.next);
+        };
+        optionsDiv.appendChild(btn);
+      });
+      optionsDiv.style.display = 'flex';
+      continueBtn.style.display = 'none';
+    }
+    // 渲染继续按钮
+    function renderContinue(show) {
+      continueBtn.style.display = show ? 'block' : 'none';
+    }
+    // 渲染重新开始按钮
+    function renderRestart(show) {
+      restartBtn.style.display = show ? 'block' : 'none';
+    }
+    // ================== 游戏流程 ==================
+    // 跳转到指定节点
+    function goToNode(nodeId) {
+      currentNodeId = nodeId;
+      renderNode();
+    }
+    // 渲染当前节点
+    function renderNode() {
+      const node = getNodeById(currentNodeId);
+      if (!node) return;
+      // 背景
+      renderBackground(node.bg);
+      // 立绘
+      renderCharacter(node.teacher);
+      // 文本
+      renderText(node.text);
+      // 选项
+      if (node.options) {
+        renderOptions(node.options);
+      } else {
+        optionsDiv.style.display = 'none';
+        // 结局占位节点
+        if (node.isEndPlaceholder) {
+          // 根据 bond 跳转到结局
+          let endingId = '';
+          if (bond >= 5) endingId = 'ending1';
+          else if (bond >= 3 && bond <= 4) endingId = 'ending2';
+          else if (bond >= -1 && bond <= 2) endingId = 'ending3';
+          else if (bond <= -2) endingId = 'ending4';
+          goToNode(endingId);
+          return;
+        }
+        // 结局节点
+        if (node.isEnd) {
+          renderContinue(false);
+          renderRestart(true);
+        } else {
+          renderContinue(true);
+          renderRestart(false);
+        }
+      }
+    }
+    // ================== 事件绑定 ==================
+    // 标题画面“开始游戏”按钮
+    startBtn.onclick = function() {
+      isGameStarted = true;
+      bond = 0;
+      currentNodeId = 'start';
+      titleScreen.style.display = 'none';
+      textboxLayer.style.display = 'flex';
+      bgLayer.style.display = 'block';
+      characterLayer.style.display = 'block';
+      renderNode();
+    };
+    // 继续按钮
+    continueBtn.onclick = function(e) {
+      e.stopPropagation();
+      const node = getNodeById(currentNodeId);
+      if (node && node.next) {
+        goToNode(node.next);
+      }
+    };
+    // 文本框区域点击推进（仅无选项时）
+    textboxLayer.onclick = function(e) {
+      // 避免点击选项按钮或继续按钮时误触
+      if (optionsDiv.style.display === 'flex') return;
+      if (restartBtn.style.display === 'block') return;
+      if (continueBtn.style.display === 'block') {
+        continueBtn.click();
+      }
+    };
+    // 重新开始按钮
+    restartBtn.onclick = function() {
+      isGameStarted = false;
+      bond = 0;
+      currentNodeId = null;
+      titleScreen.style.display = 'flex';
+      textboxLayer.style.display = 'none';
+      bgLayer.style.display = 'none';
+      characterLayer.style.display = 'none';
+      renderRestart(false);
+      renderContinue(false);
+      optionsDiv.style.display = 'none';
+      textboxContent.innerHTML = '';
+    };
+    // ================== 初始化 ==================
+    // 初始隐藏主界面
+    textboxLayer.style.display = 'none';
+    bgLayer.style.display = 'none';
+    characterLayer.style.display = 'none';
+    // 标题画面显示
+    titleScreen.style.display = 'flex';
+  </script>
+</body>
+</html>
